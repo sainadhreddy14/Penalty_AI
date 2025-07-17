@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Penalty Shootout Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0; padding: 0;
+    background: #0a3d62;
+    color: white;
+  }
+  #game-container {
+    margin: 20px auto;
+    width: 600px;
+    position: relative;
+  }
+  #goalpost {
+    width: 600px;
+    height: 300px;
+    background: url('/static/goalpost.png') no-repeat center center;
+    background-size: contain;
+    position: relative;
+    margin: 0 auto 10px auto;
+  }
+  #humanKeeper, #robotKeeper {
+    position: absolute;
+    top: 70px;
+    width: 120px;
+    height: 180px;
+    transition: left 0.5s ease;
+    user-select: none;
+  }
+  #humanKeeper {
+    display: none;
+  }
+  #robotKeeper {
+    display: none;
+  }
+  #ball {
+    position: absolute;
+    top: 230px;
+    left: 275px;
+    width: 50px;
+    height: 50px;
+    transition: left 1s ease, top 1s ease;
+    user-select: none;
+  }
+  #controls {
+    margin-top: 10px;
+  }
+  button {
+    font-size: 18px;
+    margin: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background: #0984e3;
+    color: white;
+    transition: background 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    background: #74b9ff;
+  }
+  button:disabled {
+    background: #636e72;
+    cursor: not-allowed;
+  }
+  #status-boxes {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+  }
+  .status-card {
+    flex: 1;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+  }
+  #shooterBox {
+    background-color: #1e3799;
+  }
+  #saverBox {
+    background-color: #38ada9;
+  }
+  #resultBox {
+    flex: 2;
+    background-color: #f6e58d;
+    color: #2d3436;
+  }
+  #status {
+    margin-top: 5px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  #scoreboard {
+    margin-top: 15px;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Penalty Shootout Game</h1>
+<div id="game-container">
+  <div id="goalpost">
+    <img src="/static/human_keeper.png" id="humanKeeper" alt="Human Goalkeeper" />
+    <img src="/static/robot_keeper.png" id="robotKeeper" alt="Robot Goalkeeper" />
+    <img src="/static/ball.png" id="ball" alt="Ball" />
+  </div>
+
+  <!-- New Shooter/Saver/Result boxes -->
+  <div id="status-boxes">
+    <div class="status-card" id="shooterBox">
+      <strong>Shooter:</strong>
+      <div id="shooterText">You</div>
+    </div>
+    <div class="status-card" id="saverBox">
+      <strong>Saver:</strong>
+      <div id="saverText">AI</div>
+    </div>
+    <div class="status-card" id="resultBox">
+      <strong>Result:</strong>
+      <div id="status">Loading game...</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button onclick="makeChoice('left')" id="btn-left">Left</button>
+    <button onclick="makeChoice('middle')" id="btn-middle">Middle</button>
+    <button onclick="makeChoice('right')" id="btn-right">Right</button>
+  </div>
+
+  <div id="scoreboard">
+    Round: <span id="round">0</span> / 5 &nbsp;&nbsp;|&nbsp;&nbsp; Player Score: <span id="playerScore">0</span> &nbsp;&nbsp;|&nbsp;&nbsp; AI Score: <span id="aiScore">0</span>
+  </div>
+</div>
+
+<script>
+const MAX_ROUNDS = 5;
+let gameOver = false;
+
+function resetPositions() {
+  const humanKeeper = document.getElementById('humanKeeper');
+  const robotKeeper = document.getElementById('robotKeeper');
+  const ball = document.getElementById('ball');
+
+  humanKeeper.style.left = '240px';
+  robotKeeper.style.left = '240px';
+  ball.style.left = '275px';
+  ball.style.top = '230px';
+}
+
+function positionKeeper(position, isPlayerTurn) {
+  const posMap = {
+    left: 100,
+    middle: 240,
+    right: 380
+  };
+  const leftPx = posMap[position] || posMap.middle;
+
+  if (isPlayerTurn) {
+    document.getElementById('robotKeeper').style.left = leftPx + 'px';
+  } else {
+    document.getElementById('humanKeeper').style.left = leftPx + 'px';
+  }
+}
+
+function animateBall(direction) {
+  const posMap = {
+    left: 120,
+    middle: 275,
+    right: 430
+  };
+  const ball = document.getElementById('ball');
+  const targetLeft = posMap[direction] || posMap.middle;
+
+  ball.style.left = targetLeft + 'px';
+  ball.style.top = '170px';
+}
+
+function showMessage(text, isPlayerTurn) {
+  document.getElementById('status').innerText = text;
+  document.getElementById('shooterText').innerText = isPlayerTurn ? "You" : "AI";
+  document.getElementById('saverText').innerText = isPlayerTurn ? "AI" : "You";
+}
+
+function updateScoresAndRound(data) {
+  document.getElementById('playerScore').innerText = data.player_score;
+  document.getElementById('aiScore').innerText = data.ai_score;
+  document.getElementById('round').innerText = data.round;
+}
+
+function toggleKeepers(playerTurn) {
+  document.getElementById('robotKeeper').style.display = playerTurn ? 'block' : 'none';
+  document.getElementById('humanKeeper').style.display = playerTurn ? 'none' : 'block';
+}
+
+function highlightTurn(playerTurn) {
+  showMessage(playerTurn ? "Your turn to shoot! Choose your direction." : "AI is shooting... Preparing...", playerTurn);
+}
+
+async function makeChoice(direction) {
+  if (gameOver) {
+    showMessage('Game ended. Please refresh to play again.', true);
+    return;
+  }
+
+  toggleButtons(false);
+  showMessage('Processing...', true);
+
+  try {
+    const response = await fetch('/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ choice: direction })
+    });
+
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+
+    // Show current turn's keeper
+    toggleKeepers(!data.player_turn);
+
+    // Animate based on current turn
+    if (data.player_turn) {
+      // Player will shoot next — this was AI's turn to shoot
+      positionKeeper(direction, false);       // Human keeper saved
+      animateBall(data.last_shot);            // AI's shot
+    } else {
+      // AI will shoot next — this was player's turn to shoot
+      positionKeeper(data.ai_choice, true);   // AI keeper tried to save
+      animateBall(direction);                 // Player's shot
+    }
+
+    updateScoresAndRound(data);
+
+    setTimeout(() => {
+      resetPositions();
+      toggleKeepers(data.player_turn);        // Switch to next turn's keeper
+      highlightTurn(data.player_turn);        // Prompt next action
+      showMessage('', data.player_turn);      // ✅ Clear previous result
+
+      if (!data.game_over && data.round <= MAX_ROUNDS) {
+        toggleButtons(true);
+      } else {
+        gameOver = true;
+        showMessage(data.message + ' Refresh to play again.', data.player_turn);
+      }
+    }, 1500);
+
+    showMessage(data.message, data.player_turn); // Show current result
+
+  } catch (error) {
+    showMessage('Error: ' + error.message, true);
+  }
+}
+
+
+function toggleButtons(enable) {
+  document.getElementById('btn-left').disabled = !enable;
+  document.getElementById('btn-middle').disabled = !enable;
+  document.getElementById('btn-right').disabled = !enable;
+}
+
+window.onload = () => {
+  resetPositions();
+  toggleButtons(true);
+  toggleKeepers(true); // Player starts
+  highlightTurn(true);
+};
+</script>
+
+</body>
+</html>
