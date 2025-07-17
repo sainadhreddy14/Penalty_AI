@@ -17,15 +17,21 @@ A fun, interactive web-based penalty shootout game where you play against an AI 
 ## Screenshots
 
 ### 1. Game Start: Your Turn to Shoot
-![Game Start](../screenshots/game_start.png)
+![Game Start]
+<img width="979" height="550" alt="image" src="https://github.com/user-attachments/assets/703b36ef-08e4-46c7-965a-fdaeb9e4e3c7" />
+
 *You begin as the shooter. Choose your direction (Left, Middle, Right) to take your shot against the AI goalkeeper.*
 
 ### 2. Your Turn to Save
-![Your Turn to Save](../screenshots/your_turn_to_save.png)
+![Your Turn to Save]
+<img width="973" height="548" alt="image" src="https://github.com/user-attachments/assets/b6e67c70-ee65-4565-bce4-d699cda27919" />
+
 *Now, the AI is the shooter and you are the goalkeeper. Pick a direction to dive and try to save the shot!*
 
 ### 3. Game Over & Result
-![Game Over](../screenshots/game_over.png)
+![Game Over]
+<img width="977" height="549" alt="image" src="https://github.com/user-attachments/assets/c7e3021f-9667-4c2d-bfb5-47fef6975a26" />
+
 *After 5 rounds, the game displays the final score and announces the winner. Refresh to play again!*
 
 > **Note:** Place your screenshots in a folder named `screenshots/` at the project root. Update the image links if you use different filenames or locations.
